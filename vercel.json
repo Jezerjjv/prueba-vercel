@@ -11,5 +11,13 @@
       "src": "/(.*)",
       "dest": "index.js"
     }
-  ]
+  ],
+  "env": {
+    "DB_HOST": "aws-0-us-east-2.pooler.supabase.com",
+    "DB_PORT": "5432",
+    "DB_USER": "postgres.jzzqvmpleuljipedtpow",
+    "DB_PASSWORD": "Playagrande.1991",
+    "DB_NAME": "postgres",
+    "NODE_ENV": "development"
+  }
 } 
