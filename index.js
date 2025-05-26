@@ -67,6 +67,20 @@ app.get('/', async (req, res) => {
   }
 });
 
+app.get('/notas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, title, content, "isPublic", attachments, "createdAt", "updatedAt", "ProjectId", "UserId"
+      FROM Notes
+      ORDER BY "createdAt" DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener las notas:', error.message);
+    res.status(500).json({ error: 'Error al obtener las notas', details: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor corriendo en el puerto ${port}`);
 }); 
