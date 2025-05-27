@@ -1,83 +1,57 @@
 require('dotenv').config();
 const express = require('express');
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuración de la conexión a PostgreSQL
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  ssl: {
-    rejectUnauthorized: false
-  },
-  connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 30000
+// Configuración de la conexión a MySQL
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'test',
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 // Función para verificar la conexión
 async function checkDatabaseConnection() {
   try {
-    console.log('Intentando conectar a la base de datos...');
-    console.log('Configuración:', {
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      user: process.env.DB_USER,
-      database: process.env.DB_NAME
-    });
-    
-    const client = await pool.connect();
-    console.log('Conexión a la base de datos establecida correctamente');
-    client.release();
+    const connection = await pool.getConnection();
+    await connection.ping();
+    connection.release();
+    console.log('Conexión a la base de datos MySQL establecida correctamente');
     return true;
   } catch (error) {
-    console.error('Error detallado de conexión:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
-    });
+    console.error('Error al conectar con la base de datos MySQL:', error.message);
     return false;
   }
 }
 
-app.get('/', async (req, res) => {
+// Endpoint de salud
+app.get('/salud', async (req, res) => {
   try {
     const isConnected = await checkDatabaseConnection();
     if (isConnected) {
-      res.json({ 
-        message: 'API corriendo correctamente',
-        database: 'Conectada correctamente'
-      });
+      res.json({ status: 'ok', database: 'conectada' });
     } else {
-      res.status(500).json({ 
-        message: 'API corriendo correctamente',
-        database: 'Error de conexión',
-        error: 'No se pudo establecer conexión con la base de datos'
-      });
+      res.status(500).json({ status: 'error', database: 'no conectada' });
     }
   } catch (error) {
-    res.status(500).json({
-      message: 'API corriendo correctamente',
-      database: 'Error de conexión',
-      error: error.message
-    });
+    res.status(500).json({ status: 'error', database: 'no conectada', error: error.message });
   }
 });
 
+// Endpoint para obtener todas las notas
 app.get('/notas', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id, title, content, "isPublic", attachments, "createdAt", "updatedAt", "ProjectId", "UserId"
-      FROM Notes
-      ORDER BY "createdAt" DESC
-    `);
-    res.json(result.rows);
+    const [rows] = await pool.query('SELECT id, title, content, isPublic, attachments, createdAt, updatedAt, ProjectId, UserId FROM Notes ORDER BY createdAt DESC');
+    res.json(rows);
   } catch (error) {
     console.error('Error al obtener las notas:', error.message);
-    res.status(500).json({ error: 'Error al obtener las notas', details: error.message });
+    res.status(500).json({ error: 'No se pudieron obtener las notas', details: error.message });
   }
 });
 
