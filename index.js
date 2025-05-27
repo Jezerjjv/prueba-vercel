@@ -6,11 +6,11 @@ const port = process.env.PORT || 3000;
 
 // Configuración de la conexión a MySQL
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'test',
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
+  host: "sql7.freesqldatabase.com",
+  user: "sql7781543",
+  password: "58QpQ1tA31",
+  database: "sql7781543",
+  port: 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
